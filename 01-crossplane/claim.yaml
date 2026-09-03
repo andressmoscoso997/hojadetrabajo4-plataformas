@@ -10,7 +10,7 @@ spec:
     name: postgresql-composition
 
   parameters:
-    dbName: app_equipo_alpha
+    dbName: appdb_v2
     owner: postgres
     encoding: UTF8
     connectionLimit: 20
