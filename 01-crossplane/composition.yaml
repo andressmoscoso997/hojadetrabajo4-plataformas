@@ -79,7 +79,7 @@ spec:
                       type: Format
                       fmt: "%s"
 
-              # --- Managed Resource -> Claim (status) ----------------
+              # --- Recursos Administrados -> Claim (status) ----------------
 
               # El nombre real de la base de datos vuelve al status del XR/Claim
               - type: ToCompositeFieldPath

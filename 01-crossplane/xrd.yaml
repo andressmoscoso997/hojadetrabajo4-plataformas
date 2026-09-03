@@ -7,12 +7,12 @@ metadata:
 spec:
   group: database.poc.io
 
-  # Nombre del Composite Resource (el objeto cluster-scoped que crea Crossplane)
+  # Nombre del Composite Resource
   names:
     kind: XPostgreSQLInstance
     plural: xpostgresqlinstances
 
-  # Nombre del Claim (el objeto namespaced que usa el equipo de desarrollo)
+  # Nombre del Claim
   claimNames:
     kind: PostgreSQLInstance
     plural: postgresqlinstances
@@ -40,7 +40,7 @@ spec:
                   type: object
                   properties:
 
-                    # --- Parámetro 1: nombre de la base de datos ---
+                    # --- nombre de la base de datos ---
                     dbName:
                       type: string
                       description: >-
@@ -50,7 +50,7 @@ spec:
                       minLength: 1
                       maxLength: 63
 
-                    # --- Parámetro 2: rol propietario ---
+                    # --- rol propietario ---
                     owner:
                       type: string
                       description: >-
@@ -59,7 +59,7 @@ spec:
                       minLength: 1
                       maxLength: 63
 
-                    # --- Parámetro 3: codificación ---
+                    # --- codificación ---
                     encoding:
                       type: string
                       description: Codificación del juego de caracteres.
@@ -69,7 +69,7 @@ spec:
                         - LATIN1
                       default: UTF8
 
-                    # --- Parámetro 4: límite de conexiones ---
+                    # --- límite de conexiones ---
                     connectionLimit:
                       type: integer
                       description: >-
