@@ -1,0 +1,16 @@
+apiVersion: database.poc.io/v1alpha1
+kind: PostgreSQLInstance
+metadata:
+  name: mi-base-de-datos
+  namespace: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  compositionRef:
+    name: postgresql-composition
+
+  parameters:
+    dbName: app_equipo_alpha
+    owner: postgres
+    encoding: UTF8
+    connectionLimit: 20

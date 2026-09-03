@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitops-demo
+  namespace: argocd
+  finalizers:
+    # Limpia los recursos del clúster cuando se borra la Application
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # REEMPLAZA con la URL de tu repositorio
+    repoURL: https://github.com/andressmoscoso997/hojadetrabajo4-plataformas.git
+    targetRevision: main
+    path: 01-crossplane          # Directorio donde están los manifiestos
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true       # Elimina recursos que se borraron de Git
+      selfHeal: true    # Revierte cambios manuales no autorizados
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true   # Permite sync aunque haya CRDs aún no instalados

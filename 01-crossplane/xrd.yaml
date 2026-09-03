@@ -1,0 +1,94 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xpostgresqlinstances.database.poc.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  group: database.poc.io
+
+  # Nombre del Composite Resource (el objeto cluster-scoped que crea Crossplane)
+  names:
+    kind: XPostgreSQLInstance
+    plural: xpostgresqlinstances
+
+  # Nombre del Claim (el objeto namespaced que usa el equipo de desarrollo)
+  claimNames:
+    kind: PostgreSQLInstance
+    plural: postgresqlinstances
+
+  # Claves del connection secret que la Composition expone al Claim
+  connectionSecretKeys:
+    - host
+    - port
+    - database
+    - username
+    - password
+
+  versions:
+    - name: v1alpha1
+      served: true          # la API se puede usar
+      referenceable: true   # una Composition puede referenciar esta versión
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+
+                    # --- Parámetro 1: nombre de la base de datos ---
+                    dbName:
+                      type: string
+                      description: >-
+                        Nombre de la base de datos que se creará en PostgreSQL.
+                        Solo minúsculas, dígitos y guiones bajos.
+                      pattern: '^[a-z_][a-z0-9_]*$'
+                      minLength: 1
+                      maxLength: 63
+
+                    # --- Parámetro 2: rol propietario ---
+                    owner:
+                      type: string
+                      description: >-
+                        Rol de PostgreSQL que será propietario de la base de datos.
+                      default: postgres
+                      minLength: 1
+                      maxLength: 63
+
+                    # --- Parámetro 3: codificación ---
+                    encoding:
+                      type: string
+                      description: Codificación del juego de caracteres.
+                      enum:
+                        - UTF8
+                        - SQL_ASCII
+                        - LATIN1
+                      default: UTF8
+
+                    # --- Parámetro 4: límite de conexiones ---
+                    connectionLimit:
+                      type: integer
+                      description: >-
+                        Máximo de conexiones concurrentes. -1 significa sin límite.
+                      minimum: -1
+                      maximum: 1000
+                      default: -1
+
+                  required:
+                    - dbName 
+              required:
+                - parameters
+
+            status:
+              type: object
+              properties:
+                dbName:
+                  type: string
+                  description: Nombre real de la base de datos creada.
+                ready:
+                  type: string
+                  description: Estado de la base de datos reportado por el provider.

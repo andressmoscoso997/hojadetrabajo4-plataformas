@@ -1,0 +1,101 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: postgresql-composition
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    provider: postgresql
+spec:
+  # debe coincidir con el XRD del TODO 2
+  compositeTypeRef:
+    apiVersion: database.poc.io/v1alpha1
+    kind: XPostgreSQLInstance
+
+  writeConnectionSecretsToNamespace: crossplane-system
+
+  # se resuelve ejecutando funciones
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+
+          # ---------------------------------------------------------
+          # Managed Resource: la base de datos PostgreSQL
+          # ---------------------------------------------------------
+          - name: postgresql-database
+            base:
+              apiVersion: postgresql.postgresql.upbound.io/v1alpha1
+              kind: Database
+              spec:
+                forProvider:
+                  name: placeholder
+                  owner: postgres
+                  encoding: UTF8
+                  connectionLimit: -1
+                  allowConnections: true
+                  template: template0
+                  lcCollate: C
+                  lcCtype: C
+                deletionPolicy: Delete
+                providerConfigRef:
+                  name: postgresql-config
+
+            patches:
+
+              # --- Claim -> Managed Resource -------------------------
+
+              # spec.parameters.dbName  ->  spec.forProvider.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.dbName
+                toFieldPath: spec.forProvider.name
+
+              # spec.parameters.owner   ->  spec.forProvider.owner
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.owner
+                toFieldPath: spec.forProvider.owner
+
+              # spec.parameters.encoding -> spec.forProvider.encoding
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.encoding
+                toFieldPath: spec.forProvider.encoding
+
+              # spec.parameters.connectionLimit -> spec.forProvider.connectionLimit
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.connectionLimit
+                toFieldPath: spec.forProvider.connectionLimit
+
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.labels['database.poc.io/instance']
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s"
+
+              # --- Managed Resource -> Claim (status) ----------------
+
+              # El nombre real de la base de datos vuelve al status del XR/Claim
+              - type: ToCompositeFieldPath
+                fromFieldPath: spec.forProvider.name
+                toFieldPath: status.dbName
+
+              # El estado Ready del Database vuelve al status del XR/Claim
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.conditions[0].reason
+                toFieldPath: status.ready
+                policy:
+                  fromFieldPath: Optional
+
+            # El XR solo se marca Ready cuando el Database lo está
+            readinessChecks:
+              - type: MatchCondition
+                matchCondition:
+                  type: Ready
+                  status: "True"
